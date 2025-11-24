@@ -100,7 +100,8 @@ def draw_si_no_boxes(pdf, x, y, selected, size=4.5, gap=4,
 
 def create_checkbox_table(pdf, section_title, items, x_pos, item_w, col_w,
                           row_h=3.4, head_fs=7.2, cell_fs=6.2,
-                          indent_w=5.0, title_tab_spaces=2):
+                          indent_w=9.0,  # <-- MÁS INDENTACIÓN EN SUBPUNTOS
+                          title_tab_spaces=2):
     title_prefix = " " * (title_tab_spaces * 2)
     pdf.set_x(x_pos)
     pdf.set_fill_color(230, 230, 230)
@@ -228,11 +229,11 @@ def main():
                 st.markdown(item)
             with col2:
                 seleccion = st.radio(
-                    "",
-                    ["OK", "NO", "N/A"],
-                    horizontal=True,
-                    key=item
-                )
+                "",
+                ["OK", "NO", "N/A"],
+                horizontal=True,
+                key=item
+            )
             respuestas.append((item, seleccion))
         return respuestas
 
@@ -355,7 +356,7 @@ def main():
         FIRST_TAB_RIGHT = FIRST_COL_LEFT + col_total_w
         SECOND_COL_LEFT = FIRST_TAB_RIGHT + COL_GAP
 
-        # ======= ENCABEZADO (como en el PDF de monitor) =======
+        # ======= ENCABEZADO =======
         logo_x, logo_y = 2, 2
         LOGO_W_MM = 60
         sep = 4
@@ -392,7 +393,6 @@ def main():
         pdf.set_font("Arial", "", 7.5)
         line_h = 3.4
 
-        # Cálculo de ancho de etiqueta y posición de ":"
         label_texts = ["MARCA", "MODELO", "S/N", "N/INVENTARIO", "UBICACIÓN"]
         text_widths = [pdf.get_string_width(t) for t in label_texts]
         max_label_text_w = max(text_widths) if text_widths else 28.0
@@ -404,7 +404,6 @@ def main():
         COLON_W = 1.8
         GAP_AFTER_COLON = 1.6
 
-        # Fecha (tabla dd/mm/aaaa) como en el original
         y_marca = pdf.get_y()
         date_col_w = 11.0
         date_table_w = date_col_w * 3
@@ -439,7 +438,6 @@ def main():
         pdf.cell(date_col_w, line_h, yyyy, 1, 0, "C")
         pdf.ln(line_h)
 
-        # Función genérica para los demás campos
         def left_field(lbl, val):
             pdf.set_x(FIRST_COL_LEFT)
             pdf.cell(label_w_common, line_h, f"{lbl}", 0, 0, "L")
@@ -456,17 +454,16 @@ def main():
 
         pdf.ln(2.0)
 
-        # Punto de inicio para tablas a la izquierda y contenido derecho
         left_start_y = pdf.get_y()
         right_start_y = left_start_y
 
-        # ======= IZQUIERDA: tablas 1–3 y 5. Instrumentos de análisis =======
+        # ======= IZQUIERDA: tablas 1–3 y 5 =======
         LEFT_ROW_H = 3.4
         pdf.set_y(left_start_y)
 
         create_checkbox_table(
             pdf,
-            "1. Inspección y limpieza",
+            "1.  Inspección y limpieza",  # <-- MEDIA TAB ENTRE NÚMERO Y TÍTULO
             inspeccion_limpieza,
             x_pos=FIRST_COL_LEFT,
             item_w=ITEM_W,
@@ -474,13 +471,13 @@ def main():
             row_h=LEFT_ROW_H,
             head_fs=7.2,
             cell_fs=6.2,
-            indent_w=5.0,
+            indent_w=9.0,
             title_tab_spaces=2
         )
 
         create_checkbox_table(
             pdf,
-            "2. Mediciones seguridad eléctrica",
+            "2.  Mediciones seguridad eléctrica",  # <-- MEDIA TAB
             mediciones_seguridad,
             x_pos=FIRST_COL_LEFT,
             item_w=ITEM_W,
@@ -488,13 +485,13 @@ def main():
             row_h=LEFT_ROW_H,
             head_fs=7.2,
             cell_fs=6.2,
-            indent_w=5.0,
+            indent_w=9.0,
             title_tab_spaces=2
         )
 
         create_checkbox_table(
             pdf,
-            "3. Accesorios del equipo",
+            "3.  Accesorios del equipo",  # <-- MEDIA TAB
             accesorios_equipo,
             x_pos=FIRST_COL_LEFT,
             item_w=ITEM_W,
@@ -502,7 +499,7 @@ def main():
             row_h=LEFT_ROW_H,
             head_fs=7.2,
             cell_fs=6.2,
-            indent_w=5.0,
+            indent_w=9.0,
             title_tab_spaces=2
         )
 
@@ -527,7 +524,7 @@ def main():
         )
         pdf.set_y(y_bottom_analisis + 2)
 
-        # ======= DERECHA: Observaciones, operativo, empresa, uso interno, firmas =======
+        # ======= DERECHA =======
         pdf.set_y(right_start_y)
         pdf.set_x(SECOND_COL_LEFT)
 
@@ -585,7 +582,6 @@ def main():
         )
         pdf.ln(2)
 
-        # ======= Firmas de recepción (Ingeniería / Clínico) =======
         ancho_area = col_total_w
         center_left = SECOND_COL_LEFT + (ancho_area * 0.25)
         center_right = SECOND_COL_LEFT + (ancho_area * 0.75)
@@ -647,7 +643,6 @@ def main():
 
         pdf.set_y(max(y_line + 7, pdf.get_y()))
 
-        # ======= Salida =======
         out = pdf.output(dest="S")
         if isinstance(out, str):
             out = out.encode("latin1")
