@@ -239,27 +239,27 @@ def main():
 
     # ========== Secciones según el PDF de MONITOR ==========
     inspeccion_limpieza = checklist("1. Inspección y limpieza", [
-        "1.1. Inspección general",
-        "1.2. Desarme de equipo",
-        "1.3. Limpieza de contactos",
-        "1.4. Revisión del estado de los accesorios",
-        "1.5. Revisión del panel",
-        "1.6. Revisión del conexiones eléctricas",
-        "1.7. Limpieza de contactos",
+        "1.1.   Inspección general",
+        "1.2.   Desarme de equipo",
+        "1.3.   Limpieza de contactos",
+        "1.4.   Revisión del estado de los accesorios",
+        "1.5.   Revisión del panel",
+        "1.6.   Revisión del conexiones eléctricas",
+        "1.7.   Limpieza de contactos",
     ])
 
     mediciones_seguridad = checklist("2. Mediciones seguridad eléctrica", [
-        "2.1. Medición de corrientes de fuga normal condición",
-        "2.2. Medición de corrientes de fuga con neutro abierto",
+        "2.1.   Medición de corrientes de fuga normal condición",
+        "2.2.   Medición de corrientes de fuga con neutro abierto",
     ])
 
     accesorios_equipo = checklist("3. Accesorios del equipo", [
-        "3.1. Cable de poder",
-        "3.2. Cable paciente",
-        "3.3. Cable de interfaz",
-        "3.4. Manguera PNI",
-        "3.5. Brazalete PNI",
-        "3.6. Sensor SPO2",
+        "3.1.   Cable de poder",
+        "3.2.   Cable paciente",
+        "3.3.   Cable de interfaz",
+        "3.4.   Manguera PNI",
+        "3.5.   Brazalete PNI",
+        "3.6.   Sensor SPO2",
     ])
 
     # 5. Instrumentos de análisis (mismo esquema dinámico que anestesia)
