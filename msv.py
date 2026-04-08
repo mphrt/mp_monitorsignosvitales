@@ -62,7 +62,8 @@ def _crop_signature(canvas_result):
     img_byte_arr.seek(0)
     return img_byte_arr
 
-def add_signature_inline(pdf_obj, canvas_result, x, y, w_mm=65, h_mm=20):
+def add_signature_centered(pdf_obj, canvas_result, x_line_start, line_w, y, w_mm=50, h_mm=18):
+    """Calcula el centro de la línea y posiciona la firma ahí."""
     img_byte_arr = _crop_signature(canvas_result)
     if not img_byte_arr:
         return
@@ -76,7 +77,11 @@ def add_signature_inline(pdf_obj, canvas_result, x, y, w_mm=65, h_mm=20):
         if img_h > h_mm:
             img_h = h_mm
             img_w = (img.width / img.height) * img_h
-        pdf_obj.image(tmp_path, x=x, y=y, w=img_w, h=img_h)
+        
+        # Centrado horizontal respecto a la línea
+        x_centered = x_line_start + (line_w - img_w) / 2
+        # Posicionamiento vertical (un poco arriba de la línea)
+        pdf_obj.image(tmp_path, x=x_centered, y=y - img_h - 1, w=img_w, h=img_h)
     except Exception as e:
         st.error(f"Error al añadir imagen: {e}")
 
@@ -164,7 +169,6 @@ def draw_analisis_columns(pdf, x_start, y_start, col_w, data_list):
 def main():
     st.title("Pauta de Mantenimiento Preventivo - Monitor Multiparámetro")
 
-    # DATOS PRINCIPALES CON IDEQ
     ideq = st.text_input("IDEQ")
     marca = st.text_input("MARCA")
     modelo = st.text_input("MODELO")
@@ -198,7 +202,7 @@ def main():
             st.session_state.analisis_equipos[i]['equipo'] = st.text_input("Equipo", key=f"equipo_{i}")
             st.session_state.analisis_equipos[i]['marca'] = st.text_input("Marca", key=f"marca_{i}")
             st.session_state.analisis_equipos[i]['modelo'] = st.text_input("Modelo", key=f"modelo_{i}")
-            st.session_state.analisis_equipos[i]['serie'] = st.text_input("Número de Serie", key=f"serie_{i}")
+            st.session_state.analisis_equipos[i]['serie'] = st.text_input("Número de Serie", key=f"serie_eq_{i}")
         if i > 0:
             with col_btn:
                 st.write(""); 
@@ -235,7 +239,7 @@ def main():
         FIRST_TAB_RIGHT = FIRST_COL_LEFT + col_total_w
         SECOND_COL_LEFT = FIRST_TAB_RIGHT + COL_GAP
 
-        # ======= ENCABEZADO CON LOGO E IDEQ =======
+        # ======= ENCABEZADO =======
         logo_x, logo_y, LOGO_W_MM = 2, 2, 60
         try:
             with Image.open("logo_hrt_final.jpg") as im: ratio = im.height / im.width if im.width else 1.0
@@ -243,7 +247,7 @@ def main():
             pdf.image("logo_hrt_final.jpg", x=logo_x, y=logo_y, w=LOGO_W_MM)
         except: logo_h = LOGO_W_MM * 0.8
 
-        # RECUADRO IDEQ (Superior Derecha)
+        # RECUADRO IDEQ 
         pdf.set_font("Arial", "B", 8)
         ideq_txt = f"IDEQ: {ideq}"
         ideq_w = pdf.get_string_width(ideq_txt) + 4
@@ -251,7 +255,7 @@ def main():
         pdf.set_xy(page_w - SIDE_MARGIN - ideq_w, 4)
         pdf.cell(ideq_w, 4.5, ideq_txt, border=1, align="C", fill=True)
 
-        # TÍTULO PAUTA
+        # TÍTULO 
         pdf.set_font("Arial", "B", 7)
         title_y = (logo_y + logo_h) - 5.0
         pdf.set_xy(logo_x + LOGO_W_MM + 4, title_y)
@@ -264,24 +268,24 @@ def main():
         pdf.set_font("Arial", "", 7.5); line_h = 3.4
         label_w_common = 35.0; COLON_W = 1.8; GAP_AFTER_COLON = 1.6
         
-        # Fecha a la derecha del primer campo
+        # Fecha
         x_date = FIRST_TAB_RIGHT - 33.0
         pdf.set_xy(x_date - 15, content_y_base); pdf.set_font("Arial", "B", 7.5); pdf.cell(13, line_h, "FECHA:", 0, 0, "R")
         pdf.set_font("Arial", "", 7.5); pdf.set_xy(x_date, content_y_base)
         pdf.cell(11, line_h, f"{fecha.day:02d}", 1, 0, "C"); pdf.cell(11, line_h, f"{fecha.month:02d}", 1, 0, "C"); pdf.cell(11, line_h, f"{fecha.year:04d}", 1, 1, "C")
 
         def left_field(lbl, val):
-            pdf.set_x(FIRST_COL_LEFT); pdf.cell(label_w_common, line_h, lbl, 0, 0, "L")
-            pdf.cell(COLON_W, line_h, ":", 0, 0, "C")
+            pdf.set_x(FIRST_COL_LEFT); pdf.set_font("Arial", "B", 7.5); pdf.cell(label_w_common, line_h, lbl, 0, 0, "L")
+            pdf.set_font("Arial", "", 7.5); pdf.cell(COLON_W, line_h, ":", 0, 0, "C")
             pdf.cell(0, line_h, str(val), 0, 1, "L")
 
         left_field("MARCA", marca)
         left_field("MODELO", modelo)
-        left_field("S/N", sn)
+        left_field("NÚMERO DE SERIE", sn)
         left_field("N/INVENTARIO", inventario)
         left_field("UBICACIÓN", ubicacion)
 
-        # ======= TABLAS Y CONTENIDO =======
+        # ======= TABLAS IZQUIERDA =======
         pdf.ln(2.0); start_y = pdf.get_y()
         create_checkbox_table(pdf, "1.  Inspección y limpieza", inspeccion_limpieza, FIRST_COL_LEFT, ITEM_W, COL_W)
         create_checkbox_table(pdf, "2.  Mediciones seguridad eléctrica", mediciones_seguridad, FIRST_COL_LEFT, ITEM_W, COL_W)
@@ -291,29 +295,44 @@ def main():
         pdf.cell(col_total_w, 4.0, "    5. Instrumentos de análisis", border=1, ln=1, align="L", fill=True)
         draw_analisis_columns(pdf, FIRST_COL_LEFT, pdf.get_y()+1, col_total_w, st.session_state.analisis_equipos)
 
-        # SECCIÓN DERECHA
+        # ======= SECCIÓN DERECHA =======
         pdf.set_y(start_y)
         draw_boxed_text_auto(pdf, SECOND_COL_LEFT, pdf.get_y(), col_total_w, 10, "    Observaciones", observaciones)
         pdf.ln(2); draw_si_no_boxes(pdf, SECOND_COL_LEFT, pdf.get_y(), operativo, label_w=40); pdf.ln(2)
         
-        pdf.set_x(SECOND_COL_LEFT); pdf.set_font("Arial", "", 7.5)
-        y_nom = pdf.get_y(); pdf.cell(col_total_w*0.6, 4.6, f"NOMBRE TÉCNICO/INGENIERO: {tecnico}", 0, 0)
-        pdf.cell(14, 4.6, "FIRMA:", 0, 0); add_signature_inline(pdf, canvas_tecnico, pdf.get_x(), y_nom, 65, 20)
+        # Firma Técnico (Ajustada para no sobreponerse)
+        pdf.set_x(SECOND_COL_LEFT); pdf.set_font("Arial", "B", 7.5)
+        pdf.cell(0, 4.6, f"NOMBRE TÉCNICO/INGENIERO: {tecnico}", 0, 1, "L")
+        pdf.set_x(SECOND_COL_LEFT); pdf.cell(14, 4.6, "FIRMA:", 0, 1, "L")
+        y_firma_tec = pdf.get_y()
+        add_signature_centered(pdf, canvas_tecnico, SECOND_COL_LEFT, 65, y_firma_tec + 15, 65, 20)
         
-        pdf.set_y(y_nom + 22); pdf.set_x(SECOND_COL_LEFT); pdf.cell(0, 4.0, f"EMPRESA RESPONSABLE: {empresa}", 0, 1); pdf.ln(2)
+        pdf.set_y(y_firma_tec + 18); pdf.set_x(SECOND_COL_LEFT)
+        pdf.set_font("Arial", "B", 7.5); pdf.cell(0, 4.0, f"EMPRESA RESPONSABLE: {empresa}", 0, 1); pdf.ln(2)
         draw_boxed_text_auto(pdf, SECOND_COL_LEFT, pdf.get_y(), col_total_w, 10, "    Observaciones (uso interno)", observaciones_interno)
         
-        # FIRMAS FINALES
-        pdf.ln(5); y_f = pdf.get_y(); ancho = col_total_w
-        add_signature_inline(pdf, canvas_ingenieria, SECOND_COL_LEFT + (ancho*0.1), y_f, 50, 15)
-        add_signature_inline(pdf, canvas_clinico, SECOND_COL_LEFT + (ancho*0.6), y_f, 50, 15)
-        pdf.line(SECOND_COL_LEFT+5, y_f+16, SECOND_COL_LEFT+ancho*0.45, y_f+16)
-        pdf.line(SECOND_COL_LEFT+ancho*0.55, y_f+16, SECOND_COL_LEFT+ancho-5, y_f+16)
-        pdf.set_font("Arial", "B", 6.5); pdf.set_xy(SECOND_COL_LEFT+5, y_f+17)
-        pdf.multi_cell(ancho*0.4, 3, "RECEPCIÓN CONFORME\nPERSONAL INGENIERÍA CLÍNICA", 0, 'C')
-        pdf.set_xy(SECOND_COL_LEFT+ancho*0.55, y_f+17)
-        pdf.multi_cell(ancho*0.4, 3, "RECEPCIÓN CONFORME\nPERSONAL CLÍNICO", 0, 'C')
+        # FIRMAS DE RECEPCIÓN (Centradas dinámicamente)
+        pdf.ln(22); y_linea_firmas = pdf.get_y()
+        ancho_firma = col_total_w * 0.45
+        
+        # Firma Ingeniería Clínica
+        add_signature_centered(pdf, canvas_ingenieria, SECOND_COL_LEFT+5, ancho_firma, y_linea_firmas, 50, 18)
+        # Firma Personal Clínico
+        add_signature_centered(pdf, canvas_clinico, SECOND_COL_LEFT + col_total_w - ancho_firma - 5, ancho_firma, y_linea_firmas, 50, 18)
+        
+        # Líneas de firma
+        pdf.set_draw_color(0, 0, 0)
+        pdf.line(SECOND_COL_LEFT+5, y_linea_firmas, SECOND_COL_LEFT+5 + ancho_firma, y_linea_firmas)
+        pdf.line(SECOND_COL_LEFT + col_total_w - ancho_firma - 5, y_linea_firmas, SECOND_COL_LEFT + col_total_w - 5, y_linea_firmas)
 
+        # Textos de recepción
+        pdf.set_font("Arial", "B", 6.5)
+        pdf.set_xy(SECOND_COL_LEFT+5, y_linea_firmas + 1)
+        pdf.multi_cell(ancho_firma, 3, "RECEPCIÓN CONFORME\nPERSONAL INGENIERÍA CLÍNICA", 0, 'C')
+        pdf.set_xy(SECOND_COL_LEFT + col_total_w - ancho_firma - 5, y_linea_firmas + 1)
+        pdf.multi_cell(ancho_firma, 3, "RECEPCIÓN CONFORME\nPERSONAL CLÍNICO", 0, 'C')
+
+        # Descarga
         out = pdf.output(dest="S")
         st.download_button("Descargar PDF", bytes(out) if not isinstance(out, str) else out.encode("latin1"), file_name=f"{ideq}_MP_Monitor_{sn}.pdf", mime="application/pdf")
 
