@@ -7,9 +7,10 @@ from streamlit_drawable_canvas import st_canvas
 import numpy as np
 from PIL import Image
 
-# ========= Lista de Marcas para el equipo principal =========
+# ========= Lista de Marcas =========
 OPCIONES_MARCA = [
     "", 
+    "+ Añadir nueva marca..", # Nueva opción para habilitar escritura manual
     "MEDIANA", 
     "NIHON KOHDEN", 
     "SPACELABS", 
@@ -184,9 +185,15 @@ def main():
 
     ideq = st.text_input("IDEQ")
     
-    # MARCA PRINCIPAL: Ahora es un selectbox que empieza vacío
-    marca = st.selectbox("MARCA", options=OPCIONES_MARCA, index=0)
+    # --- MODIFICACIÓN: Selección de marca con opción de "Añadir nueva" ---
+    seleccion_marca = st.selectbox("MARCA", options=OPCIONES_MARCA, index=0)
     
+    if seleccion_marca == "+ Añadir nueva marca..":
+        marca = st.text_input("Escriba la nueva marca:")
+    else:
+        marca = seleccion_marca
+    # ----------------------------------------------------------------------
+
     modelo = st.text_input("MODELO")
     sn = st.text_input("NÚMERO DE SERIE")
     inventario = st.text_input("NÚMERO DE INVENTARIO")
@@ -216,7 +223,7 @@ def main():
         col_eq, col_btn = st.columns([0.9, 0.1])
         with col_eq:
             st.session_state.analisis_equipos[i]['equipo'] = st.text_input("Equipo", key=f"equipo_{i}")
-            # MARCA DE INSTRUMENTOS: Se mantiene como text_input según tu instrucción
+            # Se mantiene como text_input según instrucción previa
             st.session_state.analisis_equipos[i]['marca'] = st.text_input("Marca", key=f"marca_{i}")
             st.session_state.analisis_equipos[i]['modelo'] = st.text_input("Modelo", key=f"modelo_{i}")
             st.session_state.analisis_equipos[i]['serie'] = st.text_input("Número de Serie", key=f"serie_eq_{i}")
@@ -293,7 +300,7 @@ def main():
             pdf.cell(COLON_W, line_h, ":", 0, 0, "C")
             pdf.cell(0, line_h, str(val), 0, 1, "L")
 
-        left_field("MARCA", marca)
+        left_field("MARCA", marca) # 'marca' tomará el valor del selector o del campo manual
         left_field("MODELO", modelo)
         left_field("NÚMERO DE SERIE", sn)
         left_field("N/INVENTARIO", inventario)
