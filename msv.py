@@ -7,10 +7,10 @@ from streamlit_drawable_canvas import st_canvas
 import numpy as np
 from PIL import Image
 
-# ========= Lista de Marcas =========
+# ========= Listas de Opciones =========
 OPCIONES_MARCA = [
     "", 
-    "+ Añadir nueva marca..", # Nueva opción para habilitar escritura manual
+    "+ Añadir nueva marca",
     "MEDIANA", 
     "NIHON KOHDEN", 
     "SPACELABS", 
@@ -22,6 +22,17 @@ OPCIONES_MARCA = [
     "PHLIPS", 
     "IRADIMED", 
     "DRAGER"
+]
+
+OPCIONES_MODELO = [
+    "",
+    "+ Añadir nuevo modelo",
+    "M30", "PVM-2701", "QUBE", "PVM2701 (VISMO)", "MEC2000", "XPREZZON", 
+    "PM9000 EXPRESS", "PM9800", "ULTRAVIEW SL", "ELANCE", "PM9000", 
+    "BSM2301K", "BSM2353K", "CARDIOCAP 5", "PM8000", "DASH 2000", 
+    "BSM-2301K", "T6", "B 40", "IPM 12", "PROCARE B40", "C50", "B105", 
+    "YM6000", "PRIZM 3", "UMEC12", "X12", "BENEVISION N15", "BENEVISION N17", 
+    "EFFICIA CM120", "BSM-3562K", "3880", "TESLA M3", "EPM12M", "VISTA 120C", "N12MPRO"
 ]
 
 # ========= Pie de página =========
@@ -185,21 +196,26 @@ def main():
 
     ideq = st.text_input("IDEQ")
     
-    # --- MODIFICACIÓN: Selección de marca con opción de "Añadir nueva" ---
-    seleccion_marca = st.selectbox("MARCA", options=OPCIONES_MARCA, index=0)
-    
-    if seleccion_marca == "+ Añadir nueva marca..":
-        marca = st.text_input("Escriba la nueva marca:")
+    # --- SECCIÓN MARCA ---
+    sel_marca = st.selectbox("MARCA", options=OPCIONES_MARCA, index=0)
+    if sel_marca == "+ Añadir nueva marca":
+        marca = st.text_input("Escribe el nombre de la nueva marca")
     else:
-        marca = seleccion_marca
-    # ----------------------------------------------------------------------
+        marca = sel_marca
 
-    modelo = st.text_input("MODELO")
+    # --- SECCIÓN MODELO ---
+    sel_modelo = st.selectbox("MODELO", options=OPCIONES_MODELO, index=0)
+    if sel_modelo == "+ Añadir nuevo modelo":
+        modelo = st.text_input("Escribe el nombre del nuevo modelo")
+    else:
+        modelo = sel_modelo
+    
     sn = st.text_input("NÚMERO DE SERIE")
     inventario = st.text_input("NÚMERO DE INVENTARIO")
     fecha = st.date_input("FECHA", value=datetime.date.today())
     ubicacion = st.text_input("UBICACIÓN")
 
+    # Checklist... (código previo sin cambios)
     def checklist(title, items):
         st.subheader(title)
         respuestas = []
@@ -223,7 +239,6 @@ def main():
         col_eq, col_btn = st.columns([0.9, 0.1])
         with col_eq:
             st.session_state.analisis_equipos[i]['equipo'] = st.text_input("Equipo", key=f"equipo_{i}")
-            # Se mantiene como text_input según instrucción previa
             st.session_state.analisis_equipos[i]['marca'] = st.text_input("Marca", key=f"marca_{i}")
             st.session_state.analisis_equipos[i]['modelo'] = st.text_input("Modelo", key=f"modelo_{i}")
             st.session_state.analisis_equipos[i]['serie'] = st.text_input("Número de Serie", key=f"serie_eq_{i}")
@@ -300,7 +315,7 @@ def main():
             pdf.cell(COLON_W, line_h, ":", 0, 0, "C")
             pdf.cell(0, line_h, str(val), 0, 1, "L")
 
-        left_field("MARCA", marca) # 'marca' tomará el valor del selector o del campo manual
+        left_field("MARCA", marca)
         left_field("MODELO", modelo)
         left_field("NÚMERO DE SERIE", sn)
         left_field("N/INVENTARIO", inventario)
