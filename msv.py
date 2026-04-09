@@ -7,6 +7,22 @@ from streamlit_drawable_canvas import st_canvas
 import numpy as np
 from PIL import Image
 
+# ========= Lista de Marcas para el equipo principal =========
+OPCIONES_MARCA = [
+    "", 
+    "MEDIANA", 
+    "NIHON KOHDEN", 
+    "SPACELABS", 
+    "GENERAL ELECTRIC", 
+    "MINDRAY", 
+    "COMEN", 
+    "CHARMCARE", 
+    "EDAN", 
+    "PHLIPS", 
+    "IRADIMED", 
+    "DRAGER"
+]
+
 # ========= Pie de página =========
 FOOTER_LINES = [
     "PAUTA MANTENIMIENTO PREVENTIVO MONITOR MULTIPARAMETRO (Ver 2)",
@@ -82,7 +98,7 @@ def add_signature_centered(pdf_obj, canvas_result, x_line_start, line_w, y, w_mm
         st.error(f"Error al añadir imagen: {e}")
 
 def draw_si_no_boxes(pdf, x, y, selected, size=4.5, gap=4, text_gap=1.5, label_w=36):
-    pdf.set_font("Arial", "B", 7.5) # Etiqueta principal sigue en negrita
+    pdf.set_font("Arial", "B", 7.5) 
     pdf.set_xy(x, y)
     pdf.cell(label_w, size, "EQUIPO OPERATIVO:", 0, 0)
     pdf.set_font("Arial", "", 7.5)
@@ -167,7 +183,10 @@ def main():
     st.title("Pauta de Mantenimiento Preventivo - Monitor Multiparámetro")
 
     ideq = st.text_input("IDEQ")
-    marca = st.text_input("MARCA")
+    
+    # MARCA PRINCIPAL: Ahora es un selectbox que empieza vacío
+    marca = st.selectbox("MARCA", options=OPCIONES_MARCA, index=0)
+    
     modelo = st.text_input("MODELO")
     sn = st.text_input("NÚMERO DE SERIE")
     inventario = st.text_input("NÚMERO DE INVENTARIO")
@@ -197,6 +216,7 @@ def main():
         col_eq, col_btn = st.columns([0.9, 0.1])
         with col_eq:
             st.session_state.analisis_equipos[i]['equipo'] = st.text_input("Equipo", key=f"equipo_{i}")
+            # MARCA DE INSTRUMENTOS: Se mantiene como text_input según tu instrucción
             st.session_state.analisis_equipos[i]['marca'] = st.text_input("Marca", key=f"marca_{i}")
             st.session_state.analisis_equipos[i]['modelo'] = st.text_input("Modelo", key=f"modelo_{i}")
             st.session_state.analisis_equipos[i]['serie'] = st.text_input("Número de Serie", key=f"serie_eq_{i}")
@@ -244,7 +264,6 @@ def main():
             pdf.image("logo_hrt_final.jpg", x=logo_x, y=logo_y, w=LOGO_W_MM)
         except: logo_h = LOGO_W_MM * 0.8
 
-        # RECUADRO IDEQ 
         pdf.set_font("Arial", "B", 8)
         ideq_txt = f"IDEQ: {ideq}"
         ideq_w = pdf.get_string_width(ideq_txt) + 4
@@ -252,7 +271,6 @@ def main():
         pdf.set_xy(page_w - SIDE_MARGIN - ideq_w, 4)
         pdf.cell(ideq_w, 4.5, ideq_txt, border=1, align="C", fill=True)
 
-        # TÍTULO 
         pdf.set_font("Arial", "B", 7)
         title_y = (logo_y + logo_h) - 5.0
         pdf.set_xy(logo_x + LOGO_W_MM + 4, title_y)
@@ -261,18 +279,16 @@ def main():
         content_y_base = max(logo_y + logo_h, title_y + 5.0) + 2
         pdf.set_y(content_y_base)
 
-        # ======= CAMPOS DE DATOS (Sin negritas en etiquetas) =======
         pdf.set_font("Arial", "", 7.5); line_h = 3.4
         label_w_common = 35.0; COLON_W = 1.8; GAP_AFTER_COLON = 1.6
         
-        # Fecha
         x_date = FIRST_TAB_RIGHT - 33.0
         pdf.set_xy(x_date - 15, content_y_base); pdf.set_font("Arial", "B", 7.5); pdf.cell(13, line_h, "FECHA:", 0, 0, "R")
         pdf.set_font("Arial", "", 7.5); pdf.set_xy(x_date, content_y_base)
         pdf.cell(11, line_h, f"{fecha.day:02d}", 1, 0, "C"); pdf.cell(11, line_h, f"{fecha.month:02d}", 1, 0, "C"); pdf.cell(11, line_h, f"{fecha.year:04d}", 1, 1, "C")
 
         def left_field(lbl, val):
-            pdf.set_x(FIRST_COL_LEFT); pdf.set_font("Arial", "", 7.5) # Sin negrita
+            pdf.set_x(FIRST_COL_LEFT); pdf.set_font("Arial", "", 7.5)
             pdf.cell(label_w_common, line_h, lbl, 0, 0, "L")
             pdf.cell(COLON_W, line_h, ":", 0, 0, "C")
             pdf.cell(0, line_h, str(val), 0, 1, "L")
@@ -283,7 +299,6 @@ def main():
         left_field("N/INVENTARIO", inventario)
         left_field("UBICACIÓN", ubicacion)
 
-        # ======= TABLAS IZQUIERDA =======
         pdf.ln(2.0); start_y = pdf.get_y()
         create_checkbox_table(pdf, "1.  Inspección y limpieza", inspeccion_limpieza, FIRST_COL_LEFT, ITEM_W, COL_W)
         create_checkbox_table(pdf, "2.  Mediciones seguridad eléctrica", mediciones_seguridad, FIRST_COL_LEFT, ITEM_W, COL_W)
@@ -293,24 +308,20 @@ def main():
         pdf.cell(col_total_w, 4.0, "    5. Instrumentos de análisis", border=1, ln=1, align="L", fill=True)
         draw_analisis_columns(pdf, FIRST_COL_LEFT, pdf.get_y()+1, col_total_w, st.session_state.analisis_equipos)
 
-        # ======= SECCIÓN DERECHA =======
         pdf.set_y(start_y)
         draw_boxed_text_auto(pdf, SECOND_COL_LEFT, pdf.get_y(), col_total_w, 10, "    Observaciones", observaciones)
         pdf.ln(2); draw_si_no_boxes(pdf, SECOND_COL_LEFT, pdf.get_y(), operativo, label_w=40); pdf.ln(2)
         
-        # Firma Técnico (Sin negrita y con más espacio)
         pdf.set_x(SECOND_COL_LEFT); pdf.set_font("Arial", "", 7.5)
         pdf.cell(0, 4.6, f"NOMBRE TÉCNICO/INGENIERO: {tecnico}", 0, 1, "L")
         pdf.set_x(SECOND_COL_LEFT); pdf.cell(14, 4.6, "FIRMA:", 0, 1, "L")
         y_firma_tec = pdf.get_y()
-        # Se aumentó y_firma_tec + 19 para dejar más espacio respecto al texto
         add_signature_centered(pdf, canvas_tecnico, SECOND_COL_LEFT, 65, y_firma_tec + 19, 65, 20)
         
         pdf.set_y(y_firma_tec + 22); pdf.set_x(SECOND_COL_LEFT)
         pdf.set_font("Arial", "", 7.5); pdf.cell(0, 4.0, f"EMPRESA RESPONSABLE: {empresa}", 0, 1); pdf.ln(2)
         draw_boxed_text_auto(pdf, SECOND_COL_LEFT, pdf.get_y(), col_total_w, 10, "    Observaciones (uso interno)", observaciones_interno)
         
-        # FIRMAS DE RECEPCIÓN
         pdf.ln(22); y_linea_firmas = pdf.get_y()
         ancho_firma = col_total_w * 0.45
         
@@ -321,13 +332,12 @@ def main():
         pdf.line(SECOND_COL_LEFT+5, y_linea_firmas, SECOND_COL_LEFT+5 + ancho_firma, y_linea_firmas)
         pdf.line(SECOND_COL_LEFT + col_total_w - ancho_firma - 5, y_linea_firmas, SECOND_COL_LEFT + col_total_w - 5, y_linea_firmas)
 
-        pdf.set_font("Arial", "B", 6.5) # Estas etiquetas de recepción se mantienen en negrita para jerarquía
+        pdf.set_font("Arial", "B", 6.5)
         pdf.set_xy(SECOND_COL_LEFT+5, y_linea_firmas + 1)
         pdf.multi_cell(ancho_firma, 3, "RECEPCIÓN CONFORME\nPERSONAL INGENIERÍA CLÍNICA", 0, 'C')
         pdf.set_xy(SECOND_COL_LEFT + col_total_w - ancho_firma - 5, y_linea_firmas + 1)
         pdf.multi_cell(ancho_firma, 3, "RECEPCIÓN CONFORME\nPERSONAL CLÍNICO", 0, 'C')
 
-        # Descarga
         out = pdf.output(dest="S")
         st.download_button("Descargar PDF", bytes(out) if not isinstance(out, str) else out.encode("latin1"), file_name=f"{ideq}_MP_Monitor_{sn}.pdf", mime="application/pdf")
 
