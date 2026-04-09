@@ -8,25 +8,12 @@ import numpy as np
 from PIL import Image
 
 # ========= Listas de Opciones =========
-OPCIONES_MARCA = [
-    "", 
-    "+ Añadir nueva marca",
-    "MEDIANA", 
-    "NIHON KOHDEN", 
-    "SPACELABS", 
-    "GENERAL ELECTRIC", 
-    "MINDRAY", 
-    "COMEN", 
-    "CHARMCARE", 
-    "EDAN", 
-    "PHLIPS", 
-    "IRADIMED", 
-    "DRAGER"
+MARCAS_BASE = [
+    "MEDIANA", "NIHON KOHDEN", "SPACELABS", "GENERAL ELECTRIC", 
+    "MINDRAY", "COMEN", "CHARMCARE", "EDAN", "PHLIPS", "IRADIMED", "DRAGER"
 ]
 
-OPCIONES_MODELO = [
-    "",
-    "+ Añadir nuevo modelo",
+MODELOS_BASE = [
     "M30", "PVM-2701", "QUBE", "PVM2701 (VISMO)", "MEC2000", "XPREZZON", 
     "PM9000 EXPRESS", "PM9800", "ULTRAVIEW SL", "ELANCE", "PM9000", 
     "BSM2301K", "BSM2353K", "CARDIOCAP 5", "PM8000", "DASH 2000", 
@@ -34,6 +21,10 @@ OPCIONES_MODELO = [
     "YM6000", "PRIZM 3", "UMEC12", "X12", "BENEVISION N15", "BENEVISION N17", 
     "EFFICIA CM120", "BSM-3562K", "3880", "TESLA M3", "EPM12M", "VISTA 120C", "N12MPRO"
 ]
+
+# Ordenamiento alfabético y estructura de menús
+OPCIONES_MARCA = ["", "+ Añadir nueva marca"] + sorted(MARCAS_BASE)
+OPCIONES_MODELO = ["", "+ Añadir nuevo modelo"] + sorted(MODELOS_BASE)
 
 # ========= Pie de página =========
 FOOTER_LINES = [
@@ -196,14 +187,14 @@ def main():
 
     ideq = st.text_input("IDEQ")
     
-    # --- MARCA CON INPUT CONDICIONAL ---
+    # --- MARCA ---
     sel_marca = st.selectbox("MARCA", options=OPCIONES_MARCA, index=0)
     if sel_marca == "+ Añadir nueva marca":
         marca = st.text_input("Escribe el nombre de la nueva marca")
     else:
         marca = sel_marca
 
-    # --- MODELO CON INPUT CONDICIONAL ---
+    # --- MODELO ---
     sel_modelo = st.selectbox("MODELO", options=OPCIONES_MODELO, index=0)
     if sel_modelo == "+ Añadir nuevo modelo":
         modelo = st.text_input("Escribe el nombre del nuevo modelo")
@@ -238,7 +229,6 @@ def main():
         col_eq, col_btn = st.columns([0.9, 0.1])
         with col_eq:
             st.session_state.analisis_equipos[i]['equipo'] = st.text_input("Equipo", key=f"equipo_{i}")
-            # Se mantiene como text_input libre para los instrumentos según instrucción
             st.session_state.analisis_equipos[i]['marca'] = st.text_input("Marca", key=f"marca_{i}")
             st.session_state.analisis_equipos[i]['modelo'] = st.text_input("Modelo", key=f"modelo_{i}")
             st.session_state.analisis_equipos[i]['serie'] = st.text_input("Número de Serie", key=f"serie_eq_{i}")
